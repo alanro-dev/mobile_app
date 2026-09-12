@@ -1,20 +1,13 @@
+import { IonicModule } from '@ionic/angular/lazy';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { IonicModule } from '@ionic/angular/lazy';
-
+import { HubPage } from './hub.page';
 import { HubPageRoutingModule } from './hub-routing.module';
 
-import { HubPage } from './hub.page';
-
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    HubPageRoutingModule
-  ],
-  declarations: [HubPage]
+  imports: [IonicModule, CommonModule, FormsModule, HubPageRoutingModule],
+  declarations: [HubPage],
 })
 export class HubPageModule {}

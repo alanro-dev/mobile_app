@@ -1,0 +1,110 @@
+// ─── Host / Page shell ────────────────────────────────────────────────────────
+:host {
+  --bg-page: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-card-hover: #21243380;
+  --border-color: #2e3450;
+  --accent: #5b7fff;
+  --text-primary: #e8eaf6;
+  --text-secondary: #7b82a8;
+  --radius-card: 20px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+.hub-content {
+  --background: var(--bg-page);
+}
+
+.hub-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 48px 20px 32px;
+  box-sizing: border-box;
+  font-family: var(--font);
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+.hub-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.hub-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.hub-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+// ─── Button grid ──────────────────────────────────────────────────────────────
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.hub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  padding: 20px 16px;
+  cursor: pointer;
+  font-family: var(--font);
+  text-align: left;
+  transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &--disabled {
+    opacity: 0.55;
+  }
+}
+
+.hub-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ion-icon {
+    font-size: 22px;
+    color: #fff;
+  }
+}
+
+.hub-card-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hub-card-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}

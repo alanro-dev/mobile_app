@@ -1,13 +1,26 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>hub</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="hub-content" [fullscreen]="true">
+  <div class="hub-container">
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">hub</ion-title>
-    </ion-toolbar>
-  </ion-header>
+    <div class="hub-header">
+      <h1 class="hub-title">Welcome</h1>
+      <p class="hub-subtitle">Where do you want to go?</p>
+    </div>
+
+    <div class="hub-grid">
+      <button
+        class="hub-card"
+        type="button"
+        *ngFor="let item of items"
+        [class.hub-card--disabled]="!item.route"
+        (click)="open(item)"
+      >
+        <div class="hub-card-icon">
+          <ion-icon [name]="item.icon"></ion-icon>
+        </div>
+        <span class="hub-card-label">{{ item.label }}</span>
+        <span class="hub-card-desc">{{ item.description }}</span>
+      </button>
+    </div>
+
+  </div>
 </ion-content>
