@@ -1,0 +1,131 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Profile</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">Log Out</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Profile</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <!-- Loading state -->
+  <div class="ion-text-center ion-padding" *ngIf="loadingUser">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <!-- Failed to load and nothing cached -->
+  <ion-text color="danger" *ngIf="!loadingUser && loadError">
+    <p class="ion-padding-start">{{ loadError }}</p>
+  </ion-text>
+
+  <form *ngIf="!loadingUser && user" (ngSubmit)="saveProfile()" #profileForm="ngForm">
+    <ion-item>
+      <ion-label position="floating">Name</ion-label>
+      <ion-input type="text" name="name" [(ngModel)]="name" autocomplete="name"></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Email</ion-label>
+      <ion-input
+        type="email"
+        name="email"
+        [(ngModel)]="email"
+        required
+        autocomplete="email"
+      ></ion-input>
+    </ion-item>
+
+    <ion-text color="success" *ngIf="profileSuccess">
+      <p class="ion-padding-start">{{ profileSuccess }}</p>
+    </ion-text>
+    <ion-text color="danger" *ngIf="profileError">
+      <p class="ion-padding-start">{{ profileError }}</p>
+    </ion-text>
+
+    <ion-button
+      expand="block"
+      type="submit"
+      class="ion-margin-top"
+      [disabled]="profileSaving || !email"
+    >
+      <ion-spinner *ngIf="profileSaving" name="crescent"></ion-spinner>
+      <span *ngIf="!profileSaving">Save Profile</span>
+    </ion-button>
+  </form>
+
+  <ion-item-divider class="ion-margin-top" *ngIf="!loadingUser && user">
+    <ion-label>Change Password</ion-label>
+  </ion-item-divider>
+
+  <form *ngIf="!loadingUser && user" (ngSubmit)="changePassword()" #passwordForm="ngForm">
+    <ion-item>
+      <ion-label position="floating">Current Password</ion-label>
+      <ion-input
+        type="password"
+        name="currentPassword"
+        [(ngModel)]="currentPassword"
+        autocomplete="current-password"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">New Password</ion-label>
+      <ion-input
+        type="password"
+        name="newPassword"
+        [(ngModel)]="newPassword"
+        autocomplete="new-password"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-label position="floating">Confirm New Password</ion-label>
+      <ion-input
+        type="password"
+        name="confirmPassword"
+        [(ngModel)]="confirmPassword"
+        autocomplete="new-password"
+      ></ion-input>
+    </ion-item>
+
+    <ion-text color="success" *ngIf="passwordSuccess">
+      <p class="ion-padding-start">{{ passwordSuccess }}</p>
+    </ion-text>
+    <ion-text color="danger" *ngIf="passwordError">
+      <p class="ion-padding-start">{{ passwordError }}</p>
+    </ion-text>
+
+    <ion-button
+      expand="block"
+      type="submit"
+      class="ion-margin-top"
+      [disabled]="passwordSaving || !currentPassword || !newPassword"
+    >
+      <ion-spinner *ngIf="passwordSaving" name="crescent"></ion-spinner>
+      <span *ngIf="!passwordSaving">Change Password</span>
+    </ion-button>
+  </form>
+
+  <ion-item-divider class="ion-margin-top" *ngIf="!loadingUser && user">
+    <ion-label color="danger">Danger Zone</ion-label>
+  </ion-item-divider>
+
+  <ion-button
+    *ngIf="!loadingUser && user"
+    expand="block"
+    color="danger"
+    fill="outline"
+    class="ion-margin-top"
+    [disabled]="deleting"
+    (click)="confirmDeleteAccount()"
+  >
+    <ion-spinner *ngIf="deleting" name="crescent"></ion-spinner>
+    <span *ngIf="!deleting">Delete Account</span>
+  </ion-button>
+</ion-content>

@@ -1,0 +1,262 @@
+// ─── Host / Page shell ────────────────────────────────────────────────────────
+:host {
+  --bg-page: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-input: #22263a;
+  --border-color: #2e3450;
+  --border-focus: #5b7fff;
+  --text-primary: #e8eaf6;
+  --text-secondary: #7b82a8;
+  --text-placeholder: #444c6e;
+  --accent: #5b7fff;
+  --accent-hover: #7a96ff;
+  --error: #ff5f6d;
+  --success: #43d9b4;
+  --radius-card: 24px;
+  --radius-field: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+// ─── Content background ───────────────────────────────────────────────────────
+.login-content {
+  --background: var(--bg-page);
+}
+
+// ─── Centered layout ──────────────────────────────────────────────────────────
+.login-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  padding: 24px 20px;
+  box-sizing: border-box;
+  font-family: var(--font);
+}
+
+// ─── Brand section ────────────────────────────────────────────────────────────
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.brand-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(91, 127, 255, 0.35);
+
+  ion-icon {
+    font-size: 30px;
+    color: #fff;
+  }
+}
+
+.brand-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+
+.brand-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+// ─── Form card ────────────────────────────────────────────────────────────────
+.login-form {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+// ─── Field group ──────────────────────────────────────────────────────────────
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &.field-error .field-input-wrap {
+    border-color: var(--error);
+    box-shadow: 0 0 0 3px rgba(255, 95, 109, 0.15);
+  }
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.field-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-field);
+  padding: 0 14px;
+  gap: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.18);
+  }
+}
+
+.field-icon {
+  font-size: 18px;
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+}
+
+.field-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: var(--font);
+  padding: 14px 0;
+
+  &::placeholder {
+    color: var(--text-placeholder);
+  }
+
+  // Remove browser autofill yellow tint
+  &:-webkit-autofill,
+  &:-webkit-autofill:focus {
+    transition: background-color 600000s 0s;
+    -webkit-text-fill-color: var(--text-primary);
+  }
+}
+
+.field-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-placeholder);
+  display: flex;
+  align-items: center;
+
+  ion-icon {
+    font-size: 20px;
+    transition: color 0.15s ease;
+  }
+
+  &:hover ion-icon {
+    color: var(--text-secondary);
+  }
+}
+
+.field-error-msg {
+  font-size: 12px;
+  color: var(--error);
+  margin-top: 2px;
+}
+
+// ─── Server error banner ──────────────────────────────────────────────────────
+.server-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 95, 109, 0.1);
+  border: 1px solid rgba(255, 95, 109, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: var(--error);
+
+  ion-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+}
+
+// ─── Submit button ────────────────────────────────────────────────────────────
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: var(--radius-field);
+  background: linear-gradient(135deg, var(--accent), #7c5cfc);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(91, 127, 255, 0.4);
+  margin-top: 4px;
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 28px rgba(91, 127, 255, 0.5);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  ion-spinner {
+    --color: #fff;
+  }
+}
+
+// ─── Footer / mode toggle ─────────────────────────────────────────────────────
+.login-footer {
+  margin-top: 20px;
+  text-align: center;
+
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--accent-hover);
+  }
+}

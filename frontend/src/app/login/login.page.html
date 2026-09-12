@@ -1,0 +1,108 @@
+<ion-content class="login-content" [fullscreen]="true">
+  <div class="login-container">
+
+    <!-- Logo / Brand -->
+    <div class="login-brand">
+      <div class="brand-icon">
+        <ion-icon name="lock-closed"></ion-icon>
+      </div>
+      <h1 class="brand-title">Welcome back</h1>
+      <p class="brand-subtitle">Sign in to continue</p>
+    </div>
+
+    <!-- Form -->
+    <form class="login-form" (ngSubmit)="onSubmit()" #loginForm="ngForm" novalidate>
+
+      <!-- Email -->
+      <div class="field-group" [class.field-error]="emailField.touched && emailField.invalid">
+        <label class="field-label" for="email">Email</label>
+        <div class="field-input-wrap">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input
+            id="email"
+            class="field-input"
+            type="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            [(ngModel)]="email"
+            name="email"
+            #emailField="ngModel"
+            required
+            email
+          />
+        </div>
+        <span class="field-error-msg" *ngIf="emailField.touched && emailField.errors?.['required']">
+          Email is required.
+        </span>
+        <span class="field-error-msg" *ngIf="emailField.touched && emailField.errors?.['email']">
+          Enter a valid email address.
+        </span>
+      </div>
+
+      <!-- Password -->
+      <div class="field-group" [class.field-error]="passwordField.touched && passwordField.invalid">
+        <label class="field-label" for="password">Password</label>
+        <div class="field-input-wrap">
+          <ion-icon name="key-outline" class="field-icon"></ion-icon>
+          <input
+            id="password"
+            class="field-input"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            [(ngModel)]="password"
+            name="password"
+            #passwordField="ngModel"
+            required
+            minlength="8"
+          />
+          <button
+            type="button"
+            class="field-toggle"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          >
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+        <span class="field-error-msg" *ngIf="passwordField.touched && passwordField.errors?.['required']">
+          Password is required.
+        </span>
+        <span class="field-error-msg" *ngIf="passwordField.touched && passwordField.errors?.['minlength']">
+          Password must be at least 8 characters.
+        </span>
+      </div>
+
+      <!-- Server error -->
+      <div class="server-error" *ngIf="serverError">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        {{ serverError }}
+      </div>
+
+      <!-- Submit -->
+      <button
+        id="login-submit-btn"
+        class="submit-btn"
+        type="submit"
+        [disabled]="loading"
+      >
+        <span *ngIf="!loading">Sign In</span>
+        <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+      </button>
+
+    </form>
+
+    <!-- Mode toggle -->
+    <div class="login-footer">
+      <p *ngIf="!isRegisterMode">
+        Don't have an account?
+        <button class="link-btn" type="button" (click)="toggleMode()">Create one</button>
+      </p>
+      <p *ngIf="isRegisterMode">
+        Already have an account?
+        <button class="link-btn" type="button" (click)="toggleMode()">Sign in</button>
+      </p>
+    </div>
+
+  </div>
+</ion-content>
