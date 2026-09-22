@@ -96,16 +96,27 @@ async function updateMe(req, res, next) {
   try {
     const { name, email, currentPassword, newPassword } = req.body;
 
-    const wantsEmailChange = email !== undefined;
     const wantsPasswordChange = newPassword !== undefined;
 
-    if (wantsEmailChange && !isValidEmail(email)) {
+    if (email !== undefined && !isValidEmail(email)) {
       return res.status(400).json({ message: 'Enter a valid email address.' });
     }
 
     if (wantsPasswordChange && newPassword.length < 8) {
       return res.status(400).json({ message: 'New password must be at least 8 characters.' });
     }
+
+    // Fetch the user upfront so we can compare the email value.
+    const user = await userModel.findByIdWithPasswordHash(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Only treat email as a real change if the value actually differs —
+    // the frontend always sends the current email as part of the form,
+    // so we must not require currentPassword when it hasn't changed.
+    const wantsEmailChange =
+      email !== undefined && email.toLowerCase() !== user.email;
 
     if (wantsEmailChange || wantsPasswordChange) {
       if (!currentPassword) {
@@ -114,17 +125,12 @@ async function updateMe(req, res, next) {
         });
       }
 
-      const user = await userModel.findByIdWithPasswordHash(req.userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found.' });
-      }
-
       const passwordMatches = await bcrypt.compare(currentPassword, user.password_hash);
       if (!passwordMatches) {
         return res.status(401).json({ message: 'Current password is incorrect.' });
       }
 
-      if (wantsEmailChange && email.toLowerCase() !== user.email) {
+      if (wantsEmailChange) {
         const existing = await userModel.findByEmail(email);
         if (existing) {
           return res.status(409).json({ message: 'An account with that email already exists.' });
@@ -151,6 +157,7 @@ async function updateMe(req, res, next) {
     return next(err);
   }
 }
+
 
 // DELETE /api/auth/me
 // Body: { currentPassword }

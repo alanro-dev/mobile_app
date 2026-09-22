@@ -13,14 +13,12 @@ import { AuthService, AuthUser } from '../services/auth.service';
 export class Tab1Page implements OnInit {
   user: AuthUser | null = null;
 
-  // Profile fields (name/email)
   name = '';
   email = '';
   profileSaving = false;
   profileError = '';
   profileSuccess = '';
 
-  // Password change fields
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
@@ -28,10 +26,10 @@ export class Tab1Page implements OnInit {
   passwordError = '';
   passwordSuccess = '';
 
-  // Delete account
   deleting = false;
 
-  loadingUser = true;
+  // Start with whatever is cached in localStorage — the form shows
+  // immediately with no spinner. The server fetch updates it silently.
   loadError = '';
 
   constructor(
@@ -42,27 +40,21 @@ export class Tab1Page implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadUser();
-  }
+    // Show cached data instantly so the form is never blocked by a network call.
+    const cached = this.auth.currentUser;
+    if (cached) {
+      this.applyUser(cached);
+    }
 
-  // READ — pull the freshest copy of the user's info from the server.
-  loadUser(): void {
-    this.loadingUser = true;
-    this.loadError = '';
-
+    // Then refresh from server in the background.
     this.auth.refreshCurrentUser().subscribe({
-      next: ({ user }) => {
-        this.applyUser(user);
-        this.loadingUser = false;
-      },
-      error: (err: Error) => {
-        // Fall back to whatever we already have cached, if anything.
-        if (this.auth.currentUser) {
-          this.applyUser(this.auth.currentUser);
-        } else {
-          this.loadError = err.message;
+      next: ({ user }) => this.applyUser(user),
+      error: () => {
+        // Cached data already applied above — nothing extra to do.
+        // Only show an error if we had nothing to fall back to.
+        if (!this.user) {
+          this.loadError = 'Could not load profile. Please check your connection.';
         }
-        this.loadingUser = false;
       },
     });
   }
@@ -73,8 +65,6 @@ export class Tab1Page implements OnInit {
     this.email = user.email;
   }
 
-  // UPDATE — name and/or email. Email changes require the current password,
-  // enforced server-side; we ask for it inline only when email actually changed.
   async saveProfile(): Promise<void> {
     if (!this.email) return;
 
@@ -86,7 +76,7 @@ export class Tab1Page implements OnInit {
         'Confirm password',
         'Enter your current password to change your email.'
       );
-      if (currentPassword === undefined) return; // cancelled
+      if (currentPassword === undefined) return;
     }
 
     this.profileSaving = true;
@@ -113,8 +103,6 @@ export class Tab1Page implements OnInit {
       });
   }
 
-  // UPDATE — password change, as its own form/section since it needs its
-  // own current-password + confirm-new-password validation.
   changePassword(): void {
     this.passwordError = '';
     this.passwordSuccess = '';
@@ -155,8 +143,6 @@ export class Tab1Page implements OnInit {
       });
   }
 
-  // DELETE — permanently remove the account, after a confirming alert +
-  // password prompt.
   async confirmDeleteAccount(): Promise<void> {
     const alert = await this.alertCtrl.create({
       header: 'Delete account?',
@@ -174,7 +160,7 @@ export class Tab1Page implements OnInit {
       'Confirm deletion',
       'Enter your current password to permanently delete your account.'
     );
-    if (currentPassword === undefined) return; // cancelled
+    if (currentPassword === undefined) return;
 
     this.deleting = true;
 
@@ -195,8 +181,6 @@ export class Tab1Page implements OnInit {
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 
-  // Small reusable password prompt used by both the email-change and
-  // delete-account flows. Resolves to undefined if the user cancels.
   private async promptForPassword(header: string, message: string): Promise<string | undefined> {
     return new Promise((resolve) => {
       this.alertCtrl
@@ -206,10 +190,7 @@ export class Tab1Page implements OnInit {
           inputs: [{ name: 'password', type: 'password', placeholder: 'Current password' }],
           buttons: [
             { text: 'Cancel', role: 'cancel', handler: () => resolve(undefined) },
-            {
-              text: 'Confirm',
-              handler: (data) => resolve(data.password || ''),
-            },
+            { text: 'Confirm', handler: (data) => resolve(data.password || '') },
           ],
         })
         .then((alert) => alert.present());

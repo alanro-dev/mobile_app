@@ -1,14 +1,236 @@
-form {
-  max-width: 400px;
+// ─── Design tokens (mirrors the hub page) ─────────────────────────────────────
+:host {
+  --bg-page:        #0f1117;
+  --bg-card:        #1a1d27;
+  --bg-card-hover:  #21243380;
+  --border-color:   #2e3450;
+  --accent:         #5b7fff;
+  --accent-danger:  #ef4444;
+  --text-primary:   #e8eaf6;
+  --text-secondary: #7b82a8;
+  --text-placeholder: #4a5080;
+  --radius-card:    20px;
+  --radius-field:   12px;
+  --font:           'Inter', system-ui, sans-serif;
+}
+
+// ─── Page background ──────────────────────────────────────────────────────────
+.profile-content {
+  --background: var(--bg-page);
+}
+
+// ─── Toolbar ──────────────────────────────────────────────────────────────────
+.profile-toolbar {
+  --background: var(--bg-page);
+  --border-color: transparent;
+}
+
+.profile-toolbar-title {
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.logout-btn {
+  --color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover {
+    --color: var(--text-primary);
+  }
+}
+
+// ─── Page container ───────────────────────────────────────────────────────────
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 48px;
+  max-width: 480px;
   margin: 0 auto;
+  font-family: var(--font);
+  box-sizing: border-box;
 }
 
-ion-item {
-  margin-bottom: 8px;
+// ─── Error banner ─────────────────────────────────────────────────────────────
+.profile-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-field);
+  padding: 12px 16px;
+  color: #f87171;
+  font-size: 14px;
+  margin-bottom: 24px;
+
+  ion-icon { font-size: 18px; flex-shrink: 0; }
 }
 
-ion-item-divider {
-  --background: transparent;
-  max-width: 400px;
-  margin: 24px auto 8px;
+// ─── Section headers ──────────────────────────────────────────────────────────
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 28px 0 12px;
+
+  &:first-of-type { margin-top: 8px; }
+}
+
+.section-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  &--danger {
+    background: linear-gradient(135deg, var(--accent-danger), #b91c1c);
+  }
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+
+  &--danger { color: var(--accent-danger); }
+}
+
+.section-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
+.profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-card);
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 4px;
+
+  &--danger {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.05);
+  }
+}
+
+// ─── Form fields ──────────────────────────────────────────────────────────────
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-input {
+  --background: #12151f;
+  --color: var(--text-primary);
+  --placeholder-color: var(--text-placeholder);
+  --border-radius: var(--radius-field);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-field);
+  font-family: var(--font);
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+
+  &.ion-focused, &:focus-within {
+    border-color: var(--accent);
+  }
+}
+
+// ─── Feedback messages ────────────────────────────────────────────────────────
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin: 0;
+
+  ion-icon { font-size: 16px; flex-shrink: 0; }
+
+  &--success {
+    color: #4ade80;
+  }
+
+  &--danger {
+    color: #f87171;
+  }
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+.action-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: var(--radius-field);
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  margin-top: 4px;
+
+  ion-icon { font-size: 18px; }
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &--danger {
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: var(--accent-danger);
+
+    &:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--accent-danger);
+      opacity: 1;
+    }
+  }
 }
