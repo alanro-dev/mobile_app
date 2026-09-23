@@ -314,7 +314,14 @@ async function insertAgent(profileSnapshotId, avatar) {
 async function storeProfileSnapshot(userId, raw) {
   await refreshMetadataIfStale();
 
-  const { ProfileDetail, ShowcaseDetail } = raw.PlayerInfo;
+  const { SocialDetail, ShowcaseDetail } = raw.PlayerInfo;
+  const ProfileDetail = SocialDetail && SocialDetail.ProfileDetail;
+
+  if (!ProfileDetail) {
+    const err = new Error(`Enka profile for uid ${raw.uid} is missing SocialDetail.ProfileDetail.`);
+    err.status = 502;
+    throw err;
+  }
 
   const profileSnapshotId = await zzzProfileModel.insertProfileSnapshot(
     userId,

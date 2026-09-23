@@ -41,7 +41,7 @@ export class CharactersPage implements ViewWillEnter {
         this.uid = profile.uid;
         this.nickname = profile.nickname;
         this.fetchedAt = profile.fetchedAt;
-        this.agents = profile.agents;
+        this.agents = profile.agents ?? [];
       },
       error: (err: Error) => {
         this.loading = false;
