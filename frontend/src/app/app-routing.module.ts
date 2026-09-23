@@ -15,7 +15,18 @@ const routes: Routes = [
   },
   {
     path: 'hub',
+    canActivate: [authGuard],
     loadChildren: () => import('./hub/hub.module').then( m => m.HubPageModule)
+  },
+  {
+    path: 'uid',
+    canActivate: [authGuard],
+    loadChildren: () => import('./uid-entry/uid-entry.module').then(m => m.UidEntryPageModule)
+  },
+  {
+    path: 'characters',
+    canActivate: [authGuard],
+    loadChildren: () => import('./characters/characters.module').then(m => m.CharactersPageModule)
   }
 ];
 @NgModule({

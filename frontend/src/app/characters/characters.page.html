@@ -1,0 +1,55 @@
+<ion-content class="characters-content" [fullscreen]="true">
+  <div class="characters-container">
+
+    <div class="characters-header">
+      <div class="header-text">
+        <h1 class="characters-title">Your Agents</h1>
+        <p class="characters-subtitle" *ngIf="nickname">{{ nickname }} · UID {{ uid }}</p>
+      </div>
+      <button class="refresh-btn" type="button" (click)="refresh()" [disabled]="refreshing || loading">
+        <ion-icon name="refresh-outline" [class.spinning]="refreshing"></ion-icon>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading your roster…</p>
+    </div>
+
+    <!-- Error -->
+    <div class="state-block error" *ngIf="!loading && errorMessage">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>{{ errorMessage }}</p>
+      <button class="retry-btn" type="button" (click)="refresh()">Try again</button>
+    </div>
+
+    <!-- Empty -->
+    <div class="state-block" *ngIf="!loading && !errorMessage && agents.length === 0">
+      <ion-icon name="people-outline"></ion-icon>
+      <p>No agents found on this profile yet.</p>
+    </div>
+
+    <!-- Roster grid -->
+    <div class="agent-grid" *ngIf="!loading && !errorMessage && agents.length > 0">
+      <button
+        class="agent-card"
+        type="button"
+        *ngFor="let agent of agents"
+        (click)="openAgent(agent)"
+      >
+        <div class="agent-icon">
+          <img *ngIf="agent.iconUrl" [src]="agent.iconUrl" [alt]="agent.name" />
+          <ion-icon *ngIf="!agent.iconUrl" name="person-outline"></ion-icon>
+        </div>
+        <span class="agent-name">{{ agent.name }}</span>
+        <span class="agent-meta">
+          <span class="agent-level">Lv. {{ agent.level }}</span>
+          <span class="agent-rarity" *ngIf="agent.rarity">{{ agent.rarity }}</span>
+        </span>
+        <span class="agent-attribute" *ngIf="agent.attribute">{{ agent.attribute }} · {{ agent.specialty }}</span>
+      </button>
+    </div>
+
+  </div>
+</ion-content>

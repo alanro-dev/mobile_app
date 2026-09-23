@@ -1,0 +1,65 @@
+<ion-content class="uid-content" [fullscreen]="true">
+  <div class="uid-container">
+
+    <!-- Brand -->
+    <div class="uid-brand">
+      <div class="brand-icon">
+        <ion-icon name="finger-print-outline"></ion-icon>
+      </div>
+      <h1 class="brand-title">Link your profile</h1>
+      <p class="brand-subtitle">Enter your Zenless Zone Zero UID to load your agents</p>
+    </div>
+
+    <!-- Form -->
+    <form class="uid-form" (ngSubmit)="onSubmit()" #uidForm="ngForm" novalidate>
+
+      <div class="field-group" [class.field-error]="uidField.touched && uidField.invalid">
+        <label class="field-label" for="uid">Player UID</label>
+        <div class="field-input-wrap">
+          <ion-icon name="person-outline" class="field-icon"></ion-icon>
+          <input
+            id="uid"
+            class="field-input"
+            type="text"
+            inputmode="numeric"
+            placeholder="1000000000"
+            autocomplete="off"
+            [(ngModel)]="uid"
+            name="uid"
+            #uidField="ngModel"
+            required
+            pattern="\d{6,10}"
+          />
+        </div>
+        <span class="field-error-msg" *ngIf="uidField.touched && uidField.errors?.['required']">
+          UID is required.
+        </span>
+        <span class="field-error-msg" *ngIf="uidField.touched && uidField.errors?.['pattern']">
+          Enter a valid 6-10 digit UID.
+        </span>
+        <span class="field-hint">
+          Find this in-game under Profile — it's your player ID number.
+        </span>
+      </div>
+
+      <!-- Server error -->
+      <div class="server-error" *ngIf="serverError">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        {{ serverError }}
+      </div>
+
+      <!-- Submit -->
+      <button
+        id="uid-submit-btn"
+        class="submit-btn"
+        type="submit"
+        [disabled]="loading"
+      >
+        <span *ngIf="!loading">Continue</span>
+        <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+      </button>
+
+    </form>
+
+  </div>
+</ion-content>

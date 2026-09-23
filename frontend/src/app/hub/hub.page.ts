@@ -22,6 +22,12 @@ export class HubPage {
   // TODO: set each `route` as the destination views are built.
   items: HubItem[] = [
     {
+      label: 'Characters',
+      description: 'View your agent roster',
+      icon: 'people-outline',
+      route: '/characters',
+    },
+    {
       label: 'Profile',
       description: 'View and edit your account',
       icon: 'person-circle-outline',
