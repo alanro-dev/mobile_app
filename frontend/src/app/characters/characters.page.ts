@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ToastController, ViewWillEnter } from '@ionic/angular';
+import { IonContent, IonIcon, IonSpinner, ToastController, ViewWillEnter } from '@ionic/angular';
 import { AgentSummary, ZzzProfileService } from '../services/zzz-profile.service';
 
 @Component({
   selector: 'app-characters',
   templateUrl: './characters.page.html',
   styleUrls: ['./characters.page.scss'],
-  standalone: false,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
+  imports: [CommonModule, IonContent, IonIcon, IonSpinner],
 })
 export class CharactersPage implements ViewWillEnter {
   agents: AgentSummary[] = [];
@@ -22,7 +25,8 @@ export class CharactersPage implements ViewWillEnter {
   constructor(
     private profileService: ZzzProfileService,
     private router: Router,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private changeDetector: ChangeDetectorRef
   ) {}
 
   // Fires every time this page becomes active — the backend is always the
@@ -37,11 +41,13 @@ export class CharactersPage implements ViewWillEnter {
 
     this.profileService.getProfile().subscribe({
       next: (profile) => {
+        console.log('PROFILE RECEIVED', profile);
         this.loading = false;
         this.uid = profile.uid;
         this.nickname = profile.nickname;
         this.fetchedAt = profile.fetchedAt;
         this.agents = profile.agents ?? [];
+        this.changeDetector.detectChanges();
       },
       error: (err: Error) => {
         this.loading = false;
@@ -52,6 +58,7 @@ export class CharactersPage implements ViewWillEnter {
           return;
         }
         this.errorMessage = err.message;
+        this.changeDetector.detectChanges();
       },
     });
   }

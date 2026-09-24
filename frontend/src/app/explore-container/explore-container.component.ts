@@ -4,7 +4,8 @@ import { Component, input } from '@angular/core';
   selector: 'app-explore-container',
   templateUrl: './explore-container.component.html',
   styleUrls: ['./explore-container.component.scss'],
-  standalone: false,
+  standalone: true,
+  imports: [],
 })
 export class ExploreContainerComponent {
   readonly name = input<string>();

@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { IonContent, IonIcon, IonSpinner } from '@ionic/angular';
+
 import { AuthService } from '../services/auth.service';
 import { ZzzProfileService } from '../services/zzz-profile.service';
 
@@ -7,7 +11,9 @@ import { ZzzProfileService } from '../services/zzz-profile.service';
   selector: 'app-login',
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
-  standalone: false,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
+  imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner],
 })
 export class LoginPage {
   email = '';

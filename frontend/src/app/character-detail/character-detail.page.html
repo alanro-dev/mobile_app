@@ -1,0 +1,124 @@
+<ion-content class="detail-content" [fullscreen]="true">
+  <div class="detail-container">
+
+    <!-- Back button -->
+    <button class="back-btn" type="button" (click)="goBack()">
+      <ion-icon name="chevron-back-outline"></ion-icon>
+      <span>Roster</span>
+    </button>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading agent…</p>
+    </div>
+
+    <!-- Error -->
+    <div class="state-block error" *ngIf="!loading && errorMessage">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <ng-container *ngIf="!loading && !errorMessage && agent">
+
+      <!-- Header -->
+      <div class="agent-header">
+        <div class="agent-icon">
+          <img *ngIf="agent.iconUrl" [src]="agent.iconUrl" [alt]="agent.name" />
+          <ion-icon *ngIf="!agent.iconUrl" name="person-outline"></ion-icon>
+        </div>
+        <div class="agent-header-text">
+          <h1 class="agent-name">{{ agent.name }}</h1>
+          <div class="agent-meta">
+            <span class="pill" *ngIf="agent.rarity">{{ agent.rarity }}</span>
+            <span class="pill" *ngIf="agent.attribute">{{ agent.attribute }}</span>
+            <span class="pill" *ngIf="agent.specialty">{{ agent.specialty }}</span>
+          </div>
+          <p class="agent-level">
+            Lv. {{ agent.level }} · Promotion {{ agent.promotionLevel }} · Mindscape {{ agent.mindscapeCinema }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">Overview</button>
+        <button class="tab-btn" [class.active]="activeTab === 'skills'" (click)="setTab('skills')">Skills</button>
+        <button class="tab-btn" [class.active]="activeTab === 'gear'" (click)="setTab('gear')">Gear</button>
+      </div>
+
+      <!-- Overview tab -->
+      <div class="tab-panel" *ngIf="activeTab === 'overview'">
+        <div class="stat-grid">
+          <div class="stat-cell" *ngFor="let row of statRows">
+            <span class="stat-label">{{ row.label }}</span>
+            <span class="stat-value">{{ row.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skills tab -->
+      <div class="tab-panel" *ngIf="activeTab === 'skills'">
+        <div class="skill-list" *ngIf="agent.skills.length > 0; else noSkills">
+          <div class="skill-row" *ngFor="let skill of agent.skills">
+            <span class="skill-name">{{ skillLabel(skill) }}</span>
+            <span class="skill-level">Lv. {{ skill.level }}</span>
+          </div>
+        </div>
+        <ng-template #noSkills>
+          <p class="empty-note">No skill data on this snapshot.</p>
+        </ng-template>
+      </div>
+
+      <!-- Gear tab -->
+      <div class="tab-panel" *ngIf="activeTab === 'gear'">
+
+        <!-- W-Engine -->
+        <div class="section-label">W-Engine</div>
+        <div class="weapon-card" *ngIf="agent.weapon as w; else noWeapon">
+          <div class="weapon-icon">
+            <img *ngIf="w.iconUrl" [src]="w.iconUrl" [alt]="w.name" />
+            <ion-icon *ngIf="!w.iconUrl" name="hardware-chip-outline"></ion-icon>
+          </div>
+          <div class="weapon-info">
+            <span class="weapon-name">{{ w.name }}</span>
+            <span class="weapon-meta">{{ w.rarity }} · Lv. {{ w.level }} · Phase {{ w.phase }} · Mod {{ w.modification }}</span>
+            <div class="weapon-stats">
+              <span *ngIf="w.mainStat">{{ w.mainStat.name }}: {{ formatStatValue(w.mainStat.value, w.mainStat.isPercent) }}</span>
+              <span *ngIf="w.subStat">{{ w.subStat.name }}: {{ formatStatValue(w.subStat.value, w.subStat.isPercent) }}</span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noWeapon>
+          <p class="empty-note">No W-Engine equipped.</p>
+        </ng-template>
+
+        <!-- Drive Discs -->
+        <div class="section-label">Drive Discs</div>
+        <div class="disc-grid" *ngIf="agent.discs.length > 0; else noDiscs">
+          <div class="disc-card" *ngFor="let disc of agent.discs">
+            <div class="disc-card-header">
+              <span class="disc-slot">Slot {{ disc.slot }}</span>
+              <span class="disc-level">+{{ disc.level }}</span>
+            </div>
+            <span class="disc-set" *ngIf="disc.setName">{{ disc.setName }}</span>
+            <div class="disc-main-stat" *ngIf="disc.mainStat">
+              {{ disc.mainStat.name }}: {{ formatStatValue(disc.mainStat.value, disc.mainStat.isPercent) }}
+            </div>
+            <div class="disc-substats">
+              <span class="disc-substat" *ngFor="let sub of disc.subStats">
+                {{ sub.name }} +{{ formatStatValue(sub.value, sub.isPercent) }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noDiscs>
+          <p class="empty-note">No Drive Discs equipped.</p>
+        </ng-template>
+
+      </div>
+
+    </ng-container>
+
+  </div>
+</ion-content>

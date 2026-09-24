@@ -1,6 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import {
+  AlertController,
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonInput,
+  IonSpinner,
+  IonTitle,
+  IonToolbar,
+  ToastController,
+} from '@ionic/angular';
 
 import { AuthService, AuthUser } from '../services/auth.service';
 
@@ -8,7 +22,21 @@ import { AuthService, AuthUser } from '../services/auth.service';
   selector: 'app-tab1',
   templateUrl: 'tab1.page.html',
   styleUrls: ['tab1.page.scss'],
-  standalone: false,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
+    IonIcon,
+    IonContent,
+    IonInput,
+    IonSpinner,
+  ],
 })
 export class Tab1Page implements OnInit {
   user: AuthUser | null = null;

@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { ToastController } from '@ionic/angular';
+import { IonContent, IonIcon, ToastController } from '@ionic/angular';
 
 // One entry per button on the hub. Fill in `route` once the destination
 // page/route exists (e.g. '/tabs/tab2'); leave it null as a placeholder and
@@ -16,7 +17,9 @@ export interface HubItem {
   selector: 'app-hub',
   templateUrl: 'hub.page.html',
   styleUrls: ['hub.page.scss'],
-  standalone: false,
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
+  imports: [CommonModule, IonContent, IonIcon],
 })
 export class HubPage {
   // TODO: set each `route` as the destination views are built.
