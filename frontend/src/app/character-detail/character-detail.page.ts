@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,6 +44,7 @@ const STAT_DISPLAY: { key: keyof AgentSummary['stats']; label: string; percent: 
   templateUrl: './character-detail.page.html',
   styleUrls: ['./character-detail.page.scss'],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner],
 })
 export class CharacterDetailPage {
@@ -55,7 +56,8 @@ export class CharacterDetailPage {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private profileService: ZzzProfileService
+    private profileService: ZzzProfileService,
+    private changeDetector: ChangeDetectorRef
   ) {}
 
   ionViewWillEnter(): void {
@@ -66,6 +68,7 @@ export class CharacterDetailPage {
     const snapshotId = this.route.snapshot.paramMap.get('id');
     this.loading = true;
     this.errorMessage = '';
+    this.changeDetector.detectChanges();
 
     // The backend is the source of truth every load (same as the roster
     // page) — this also means the detail page works correctly on a direct

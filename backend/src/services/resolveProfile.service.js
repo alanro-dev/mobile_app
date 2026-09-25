@@ -303,7 +303,8 @@ async function insertAgent(profileSnapshotId, avatar) {
   // SkillLevelList is a dict, e.g. { "0": 6, "1": 8, "3": 10, "5": 4, "6": 3 }
   for (const [indexStr, level] of Object.entries(avatar.SkillLevelList || {})) {
     const skillType = SKILL_INDEX_NAMES[Number(indexStr)] ?? `skill_${indexStr}`;
-    await zzzProfileModel.insertSkillSnapshot(agentSnapshotId, skillType, level);
+    const skillLevel = typeof level === 'object' ? level.Level ?? level.level : level;
+    await zzzProfileModel.insertSkillSnapshot(agentSnapshotId, skillType, skillLevel);
   }
 }
 
