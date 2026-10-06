@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon, ToastController } from '@ionic/angular';
+import { IonFooter } from '@ionic/angular';
+import { AppTabBarComponent } from '../app-tab-bar/app-tab-bar.component';
 
 // One entry per button on the hub. Fill in `route` once the destination
 // page/route exists (e.g. '/tabs/tab2'); leave it null as a placeholder and
@@ -19,7 +21,7 @@ export interface HubItem {
   styleUrls: ['hub.page.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, IonContent, IonIcon],
+  imports: [CommonModule, IonContent, IonIcon, IonFooter, AppTabBarComponent],
 })
 export class HubPage {
   // TODO: set each `route` as the destination views are built.
@@ -37,10 +39,10 @@ export class HubPage {
       route: '/tabs/tab1',
     },
     {
-      label: 'Section Two',
-      description: 'Not set up yet',
-      icon: 'grid-outline',
-      route: null,
+      label: 'Analytics',
+      description: 'Charts for your roster and gear',
+      icon: 'stats-chart-outline',
+      route: '/analytics',
     },
     {
       label: 'Section Three',

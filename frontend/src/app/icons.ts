@@ -2,6 +2,7 @@ import { addIcons } from 'ionicons';
 import {
   alertCircleOutline,
   checkmarkCircleOutline,
+  chevronBackOutline,
   ellipse,
   eyeOffOutline,
   eyeOutline,
@@ -19,6 +20,7 @@ import {
   refreshOutline,
   sparklesOutline,
   square,
+  statsChartOutline,
   trashOutline,
   warningOutline,
 } from 'ionicons/icons';
@@ -30,6 +32,7 @@ export function registerAppIcons(): void {
   addIcons({
     'alert-circle-outline': alertCircleOutline,
     'checkmark-circle-outline': checkmarkCircleOutline,
+    'chevron-back-outline': chevronBackOutline,
     ellipse,
     'eye-off-outline': eyeOffOutline,
     'eye-outline': eyeOutline,
@@ -47,6 +50,7 @@ export function registerAppIcons(): void {
     'refresh-outline': refreshOutline,
     'sparkles-outline': sparklesOutline,
     square,
+    'stats-chart-outline': statsChartOutline,
     'trash-outline': trashOutline,
     'warning-outline': warningOutline,
   });

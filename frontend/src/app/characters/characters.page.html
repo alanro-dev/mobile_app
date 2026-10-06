@@ -1,5 +1,10 @@
 <ion-content class="characters-content" [fullscreen]="true">
   <div class="characters-container">
+    
+    <button class="back-btn" type="button" (click)="goBack()">
+      <ion-icon name="chevron-back-outline"></ion-icon>
+      <span>Hub</span>
+    </button>
 
     <div class="characters-header">
       <div class="header-text">
@@ -53,3 +58,7 @@
 
   </div>
 </ion-content>
+
+<ion-footer class="app-footer">
+  <app-tab-bar active="characters"></app-tab-bar>
+</ion-footer>

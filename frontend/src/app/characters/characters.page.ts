@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IonContent, IonIcon, IonSpinner, ToastController, ViewWillEnter } from '@ionic/angular';
 import { AgentSummary, ZzzProfileService } from '../services/zzz-profile.service';
+import { IonFooter } from '@ionic/angular';
+import { AppTabBarComponent } from '../app-tab-bar/app-tab-bar.component';
 
 @Component({
   selector: 'app-characters',
@@ -10,7 +12,7 @@ import { AgentSummary, ZzzProfileService } from '../services/zzz-profile.service
   styleUrls: ['./characters.page.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [CommonModule, IonContent, IonIcon, IonSpinner],
+  imports: [CommonModule, IonContent, IonIcon, IonSpinner, IonFooter, AppTabBarComponent],
 })
 export class CharactersPage implements ViewWillEnter {
   agents: AgentSummary[] = [];
@@ -33,6 +35,10 @@ export class CharactersPage implements ViewWillEnter {
   // source of truth here, so we re-fetch rather than relying on cached state.
   ionViewWillEnter(): void {
     this.loadProfile();
+  }
+
+  goBack(): void {
+    this.router.navigate(['/hub']);
   }
 
   private loadProfile(): void {

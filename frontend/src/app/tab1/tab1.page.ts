@@ -6,7 +6,7 @@ import {
   AlertController,
   IonButton,
   IonButtons,
-  IonContent,
+  IonContent, IonFooter,
   IonHeader,
   IonIcon,
   IonInput,
@@ -15,6 +15,7 @@ import {
   IonToolbar,
   ToastController,
 } from '@ionic/angular';
+import { AppTabBarComponent } from '../app-tab-bar/app-tab-bar.component';
 
 import { AuthService, AuthUser } from '../services/auth.service';
 
@@ -24,7 +25,7 @@ import { AuthService, AuthUser } from '../services/auth.service';
   styleUrls: ['tab1.page.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [
+  imports: [AppTabBarComponent, IonFooter, 
     CommonModule,
     FormsModule,
     IonHeader,

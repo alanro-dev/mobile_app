@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IonContent, IonIcon, IonSpinner } from '@ionic/angular';
+import { IonContent, IonIcon, IonSpinner, ViewWillEnter } from '@ionic/angular';
 
 import { AgentSkill, AgentSummary, ZzzProfileService } from '../services/zzz-profile.service';
 
@@ -47,7 +47,7 @@ const STAT_DISPLAY: { key: keyof AgentSummary['stats']; label: string; percent: 
   changeDetection: ChangeDetectionStrategy.Default,
   imports: [CommonModule, FormsModule, IonContent, IonIcon, IonSpinner],
 })
-export class CharacterDetailPage {
+export class CharacterDetailPage implements ViewWillEnter {
   agent: AgentSummary | null = null;
   loading = true;
   errorMessage = '';
@@ -79,19 +79,22 @@ export class CharacterDetailPage {
         const found = profile.agents.find((a) => a.snapshotId === snapshotId);
         if (!found) {
           this.errorMessage = 'This agent could not be found in your latest profile snapshot.';
-          return;
+        } else {
+          this.agent = found;
         }
-        this.agent = found;
+        this.changeDetector.detectChanges();
       },
       error: (err: Error) => {
         this.loading = false;
         this.errorMessage = err.message;
+        this.changeDetector.detectChanges();
       },
     });
   }
 
   setTab(tab: TabId): void {
     this.activeTab = tab;
+    this.changeDetector.detectChanges();
   }
 
   goBack(): void {

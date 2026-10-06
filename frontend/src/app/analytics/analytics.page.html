@@ -1,0 +1,167 @@
+<ion-content class="analytics-content" [fullscreen]="true">
+  <div class="analytics-container">
+
+    <button class="back-btn" type="button" (click)="goBack()">
+      <ion-icon name="chevron-back-outline"></ion-icon>
+      <span>Hub</span>
+    </button>
+
+    <h1 class="page-title">Analytics</h1>
+
+    <!-- Loading -->
+    <div class="state-block" *ngIf="loading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Crunching your roster…</p>
+    </div>
+
+    <!-- Error -->
+    <div class="state-block error" *ngIf="!loading && errorMessage">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <p>{{ errorMessage }}</p>
+    </div>
+
+    <!-- Empty -->
+    <div class="state-block" *ngIf="!loading && !errorMessage && agents.length === 0">
+      <ion-icon name="people-outline"></ion-icon>
+      <p>No agents found on this profile yet.</p>
+    </div>
+
+    <ng-container *ngIf="!loading && !errorMessage && agents.length > 0">
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'discs'" (click)="setTab('discs')">Discs</button>
+        <button class="tab-btn" [class.active]="activeTab === 'skills'" (click)="setTab('skills')">Skills</button>
+        <button class="tab-btn" [class.active]="activeTab === 'roster'" (click)="setTab('roster')">Roster</button>
+        <button class="tab-btn" [class.active]="activeTab === 'compare'" (click)="setTab('compare')">Compare</button>
+      </div>
+
+      <!-- Agent selector (shared by Discs + Skills) -->
+      <div class="chip-row" *ngIf="activeTab === 'discs' || activeTab === 'skills'">
+        <button class="chip" [class.active]="selectedId === 'all'" (click)="selectAgent('all')">All agents</button>
+        <button
+          class="chip"
+          *ngFor="let agent of agents"
+          [class.active]="selectedId === agent.snapshotId"
+          (click)="selectAgent(agent.snapshotId)"
+        >{{ agent.name }}</button>
+      </div>
+
+      <!-- Discs -->
+      <div class="tab-panel" *ngIf="activeTab === 'discs'">
+        <div class="section-label">Disc substat rolls</div>
+        <p class="summary-note" *ngIf="discSummary">{{ discSummary }}</p>
+
+        <div class="bar-list" *ngIf="discRows.length > 0; else noDiscs">
+          <div class="bar-row" *ngFor="let row of discRows">
+            <div class="bar-head">
+              <span class="bar-label">{{ row.label }}</span>
+              <span class="bar-value">{{ row.display }}<span class="bar-sub" *ngIf="row.sub"> · {{ row.sub }}</span></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+          </div>
+        </div>
+        <ng-template #noDiscs>
+          <p class="empty-note">No Drive Disc data for this selection.</p>
+        </ng-template>
+      </div>
+
+      <!-- Skills -->
+      <div class="tab-panel" *ngIf="activeTab === 'skills'">
+        <div class="section-label">{{ skillTitle }}</div>
+
+        <div class="bar-list" *ngIf="skillRows.length > 0; else noSkills">
+          <div class="bar-row" *ngFor="let row of skillRows">
+            <div class="bar-head">
+              <span class="bar-label">{{ row.label }}</span>
+              <span class="bar-value">{{ row.display }}<span class="bar-sub" *ngIf="row.sub"> · {{ row.sub }}</span></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+          </div>
+        </div>
+        <ng-template #noSkills>
+          <p class="empty-note">No skill data for this selection.</p>
+        </ng-template>
+      </div>
+
+      <!-- Roster overview -->
+      <div class="tab-panel" *ngIf="activeTab === 'roster'">
+        <div class="donut-card" *ngFor="let donut of donuts">
+          <div class="section-label">{{ donut.title }}</div>
+          <div class="donut-body">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 42 42" class="donut-svg">
+                <circle class="donut-ring" cx="21" cy="21" r="15.9155"></circle>
+                <circle
+                  *ngFor="let seg of donut.segments"
+                  class="donut-seg"
+                  cx="21" cy="21" r="15.9155"
+                  [attr.stroke]="seg.color"
+                  [attr.stroke-dasharray]="seg.dashArray"
+                  [attr.stroke-dashoffset]="seg.dashOffset"
+                ></circle>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-total">{{ donut.total }}</span>
+                <span class="donut-total-label">agents</span>
+              </div>
+            </div>
+            <ul class="legend">
+              <li *ngFor="let seg of donut.segments">
+                <span class="legend-dot" [style.background]="seg.color"></span>
+                <span class="legend-label">{{ seg.label }}</span>
+                <span class="legend-count">{{ seg.count }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-label">Level distribution</div>
+        <div class="bar-list">
+          <div class="bar-row" *ngFor="let row of levelRows">
+            <div class="bar-head">
+              <span class="bar-label">{{ row.label }}</span>
+              <span class="bar-value">{{ row.display }}</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compare -->
+      <div class="tab-panel" *ngIf="activeTab === 'compare'">
+        <div class="chip-row">
+          <button
+            class="chip"
+            *ngFor="let opt of statOptions"
+            [class.active]="compareKey === opt.key"
+            (click)="selectStat(opt.key)"
+          >{{ opt.label }}</button>
+        </div>
+
+        <div class="bar-list">
+          <div class="bar-row" *ngFor="let row of compareRows; let i = index">
+            <div class="bar-head">
+              <span class="bar-label compare-label">
+                <span class="rank">{{ i + 1 }}</span>
+                <span class="mini-icon">
+                  <img *ngIf="row.iconUrl" [src]="row.iconUrl" [alt]="row.label" />
+                  <ion-icon *ngIf="!row.iconUrl" name="person-outline"></ion-icon>
+                </span>
+                {{ row.label }}
+              </span>
+              <span class="bar-value">{{ row.display }}<span class="bar-sub" *ngIf="row.sub"> · {{ row.sub }}</span></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </div>
+</ion-content>
+
+<ion-footer class="app-footer">
+  <app-tab-bar active="analytics"></app-tab-bar>
+</ion-footer>

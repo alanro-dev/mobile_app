@@ -40,13 +40,13 @@
 const zzzMetadataModel = require('../models/zzzMetadata.model');
 
 const STORE_BASE_URL = 'https://raw.githubusercontent.com/EnkaNetwork/API-docs/master/store/zzz';
-const ICON_CDN_BASE = 'https://enka.network'; // see caveat above — unverified
+const ICON_CDN_BASE = 'https://enka.network'; 
 
 const STORE_FILES = {
   agents: 'avatars.json',
   weapons: 'weapons.json',
   equipment: 'equipments.json',
-  properties: 'property.json', // NOTE: singular "property.json", not "properties.json"
+  properties: 'property.json',
   locs: 'locs.json',
 };
 

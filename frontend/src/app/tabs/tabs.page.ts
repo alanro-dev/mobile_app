@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from '@ionic/angular';
+import { IonRouterOutlet } from '@ionic/angular';
 
 @Component({
   selector: 'app-tabs',
@@ -7,6 +7,6 @@ import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from '@ionic/angu
   styleUrls: ['tabs.page.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.Default,
-  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel],
+  imports: [IonRouterOutlet],
 })
 export class TabsPage {}

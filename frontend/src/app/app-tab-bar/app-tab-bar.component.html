@@ -1,0 +1,11 @@
+<ion-tab-bar [selectedTab]="active">
+  <ion-tab-button
+    *ngFor="let item of items"
+    [tab]="item.id"
+    [class.tab-selected]="item.id === active"
+    (click)="go(item)"
+  >
+    <ion-icon aria-hidden="true" [name]="item.icon"></ion-icon>
+    <ion-label>{{ item.label }}</ion-label>
+  </ion-tab-button>
+</ion-tab-bar>

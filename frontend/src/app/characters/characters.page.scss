@@ -74,6 +74,22 @@
   to { transform: rotate(360deg); }
 }
 
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 6px 0 12px;
+  cursor: pointer;
+
+  ion-icon { font-size: 18px; }
+  &:hover { color: var(--text-primary); }
+}
+
 // ─── State blocks (loading / error / empty) ──────────────────────────────────
 .state-block {
   display: flex;
