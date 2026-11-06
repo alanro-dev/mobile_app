@@ -1,5 +1,10 @@
 const pool = require('../db/pool');
 
+// Property metadata is tiny and static, so it is cached in memory. Every stat
+// scaling call used to hit the database; now it is a Map lookup. The cache is
+// cleared whenever a property is upserted (i.e. during a metadata refresh).
+const propertyMetaCache = new Map();
+
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000; // refresh metadata at most once a day
 
 async function isStale() {
@@ -8,6 +13,15 @@ async function isStale() {
   );
   if (!rows[0]) return true;
   return Date.now() - new Date(rows[0].refreshed_at).getTime() > STALE_AFTER_MS;
+}
+
+// Milliseconds since the metadata was last refreshed (Infinity if never).
+async function msSinceRefresh() {
+  const { rows } = await pool.query(
+    "SELECT refreshed_at FROM zzz_metadata_refresh WHERE id = 'singleton'"
+  );
+  if (!rows[0]) return Infinity;
+  return Date.now() - new Date(rows[0].refreshed_at).getTime();
 }
 
 async function markRefreshed() {
@@ -87,16 +101,22 @@ async function upsertProperty(property) {
      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, is_percent = EXCLUDED.is_percent, updated_at = NOW()`,
     [property.id, property.name, property.isPercent ?? false]
   );
+  propertyMetaCache.clear();
 }
 
 async function getPropertyMeta(propertyId) {
+  if (propertyMetaCache.has(propertyId)) return propertyMetaCache.get(propertyId);
+
   const { rows } = await pool.query(
     'SELECT name, is_percent FROM zzz_properties WHERE id = $1',
     [propertyId]
   );
-  return rows[0]
+  const meta = rows[0]
     ? { name: rows[0].name, isPercent: rows[0].is_percent }
     : { name: String(propertyId), isPercent: false };
+
+  propertyMetaCache.set(propertyId, meta);
+  return meta;
 }
 
 /** Growth-curve data needed to compute an agent's real (non-gear) base stats. */
@@ -131,6 +151,7 @@ async function getEquipmentRarityValue(equipmentId) {
 }
 
 module.exports = {
+  msSinceRefresh,
   isStale,
   markRefreshed,
   upsertAgent,

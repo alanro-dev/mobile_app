@@ -120,7 +120,7 @@ async function isMetadataStale() {
  * Safe to call frequently — callers should gate this behind
  * isMetadataStale() to avoid hammering GitHub's raw content CDN.
  */
-async function refreshMetadata() {
+async function doRefreshMetadata() {
   const [locs, agents, weapons, equipment, properties] = await Promise.all([
     fetchJson(STORE_FILES.locs),
     fetchJson(STORE_FILES.agents),
@@ -196,10 +196,33 @@ async function refreshMetadata() {
   await zzzMetadataModel.markRefreshed();
 }
 
+// If a refresh is already running, every caller shares it instead of starting
+// a second download + thousands of upserts in parallel.
+let inFlightRefresh = null;
+
+function refreshMetadata() {
+  if (!inFlightRefresh) {
+    inFlightRefresh = doRefreshMetadata().finally(() => {
+      inFlightRefresh = null;
+    });
+  }
+  return inFlightRefresh;
+}
+
+// Refresh only if the stored copy is older than `maxAgeMs`. Used when a player
+// owns something (e.g. a newly released agent) the stored metadata lacks.
+async function refreshMetadataIfOlderThan(maxAgeMs) {
+  if ((await zzzMetadataModel.msSinceRefresh()) > maxAgeMs) {
+    await refreshMetadata();
+    return true;
+  }
+  return false;
+}
+
 async function refreshMetadataIfStale() {
   if (await isMetadataStale()) {
     await refreshMetadata();
   }
 }
 
-module.exports = { isMetadataStale, refreshMetadata, refreshMetadataIfStale };
+module.exports = { isMetadataStale, refreshMetadata, refreshMetadataIfStale, refreshMetadataIfOlderThan };

@@ -430,3 +430,24 @@
 .change-date { color: var(--text-secondary); flex: 1; }
 .change-value { color: var(--text-primary); font-weight: 600; }
 .change-delta { min-width: 96px; text-align: right; font-weight: 600; }
+
+@mixin app-scrollbar($size: 6px) {
+  scrollbar-width: thin;                 // Firefox
+  scrollbar-color: #2e3450 transparent;
+
+  &::-webkit-scrollbar { width: $size; height: $size; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: #2e3450;                 // same as your card borders
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.15s ease;
+  }
+  &::-webkit-scrollbar-thumb:hover { background: #5b7fff; }  // accent on hover
+  &::-webkit-scrollbar-corner { background: transparent; }
+}
+
+// Vertical page scroll lives in ion-content's shadow DOM, hence ::part(scroll)
+.analytics-content::part(scroll) { @include app-scrollbar(6px); }
+.chip-row { @include app-scrollbar(5px); }

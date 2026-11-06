@@ -19,8 +19,8 @@ async function getUid(req, res, next) {
 
 // POST /api/users/uid
 // Body: { uid: string }
-// Validates the UID against enka.network, saves it to the user's row, and
-// takes an initial profile snapshot so /hub has data immediately.
+// Validates the UID against enka.network, takes an initial profile snapshot
+// so /hub has data immediately, and then saves the UID to the user's row.
 async function setUid(req, res, next) {
   try {
     const uid = typeof req.body.uid === 'string' ? req.body.uid.trim() : '';
@@ -29,10 +29,23 @@ async function setUid(req, res, next) {
       return res.status(400).json({ message: 'UID must be a 6-10 digit number.' });
     }
 
+    // Fail fast (before any network/DB work) if another account already uses this UID.
+    const taken = await pool.query('SELECT 1 FROM users WHERE zzz_uid = $1 AND id <> $2 LIMIT 1', [
+      uid,
+      req.userId,
+    ]);
+    if (taken.rows.length > 0) {
+      return res.status(409).json({ message: 'This UID is already linked to another account.' });
+    }
+
     const raw = await enkaService.fetchRawProfile(uid);
 
-    await pool.query('UPDATE users SET zzz_uid = $1 WHERE id = $2', [uid, req.userId]);
+    // Snapshot FIRST, then save the UID: if the snapshot fails the account is
+    // left untouched, instead of holding a UID that has no data behind it.
+    // (A rare race with another account claiming the UID is caught by the
+    // unique constraint and turned into the same 409 by the error handler.)
     const snapshotId = await resolveProfileService.storeProfileSnapshot(req.userId, raw);
+    await pool.query('UPDATE users SET zzz_uid = $1 WHERE id = $2', [uid, req.userId]);
 
     return res.status(201).json({ uid, snapshotId });
   } catch (err) {

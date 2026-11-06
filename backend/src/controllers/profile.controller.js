@@ -3,39 +3,41 @@ const enkaService = require('../services/enka.service');
 const resolveProfileService = require('../services/resolveProfile.service');
 const zzzProfileModel = require('../models/zzzProfile.model');
 
-async function buildAgentPayload(agentSnapshot) {
-  const weapon = await zzzProfileModel.getWeaponSnapshot(agentSnapshot.id);
-  const discRows = await zzzProfileModel.getDiscSnapshots(agentSnapshot.id);
-  const skills = await zzzProfileModel.getSkillSnapshots(agentSnapshot.id);
+function groupBy(rows, keyFn) {
+  const map = new Map();
+  for (const row of rows) {
+    const key = keyFn(row);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+  }
+  return map;
+}
 
-  const discs = await Promise.all(
-    discRows.map(async (disc) => {
-      const substats = await zzzProfileModel.getDiscSubstats(disc.id);
-      return {
-        slot: disc.slot,
-        equipmentId: disc.equipment_id,
-        setName: disc.set_name,
-        rarity: disc.rarity,
-        iconUrl: disc.icon_url,
-        level: disc.level,
-        mainStat: disc.main_stat_id
-          ? {
-              propertyId: disc.main_stat_id,
-              name: disc.main_stat_name,
-              value: Number(disc.main_stat_value),
-              isPercent: disc.main_stat_is_percent,
-            }
-          : null,
-        subStats: substats.map((s) => ({
-          propertyId: s.property_id,
-          name: s.name,
-          value: Number(s.value),
-          isPercent: s.is_percent,
-          rolls: s.rolls,
-        })),
-      };
-    })
-  );
+// Pure mapper: DB rows (already loaded in bulk) -> the JSON the client expects.
+function buildAgentPayload(agentSnapshot, weapon, discRows, skillRows, substatsByDisc) {
+  const discs = discRows.map((disc) => ({
+    slot: disc.slot,
+    equipmentId: disc.equipment_id,
+    setName: disc.set_name,
+    rarity: disc.rarity,
+    iconUrl: disc.icon_url,
+    level: disc.level,
+    mainStat: disc.main_stat_id
+      ? {
+          propertyId: disc.main_stat_id,
+          name: disc.main_stat_name,
+          value: Number(disc.main_stat_value),
+          isPercent: disc.main_stat_is_percent,
+        }
+      : null,
+    subStats: (substatsByDisc.get(disc.id) || []).map((s) => ({
+      propertyId: s.property_id,
+      name: s.name,
+      value: Number(s.value),
+      isPercent: s.is_percent,
+      rolls: s.rolls,
+    })),
+  }));
 
   return {
     snapshotId: agentSnapshot.id,
@@ -63,7 +65,7 @@ async function buildAgentPayload(agentSnapshot) {
       penFlat: Number(agentSnapshot.pen_flat),
       energyRegen: Number(agentSnapshot.energy_regen),
     },
-    skills: skills.map((s) => ({ type: s.skill_type, level: s.level })),
+    skills: skillRows.map((s) => ({ type: s.skill_type, level: s.level })),
     weapon: weapon
       ? {
           weaponId: weapon.weapon_id,
@@ -90,6 +92,10 @@ async function buildAgentPayload(agentSnapshot) {
 // Returns the latest stored snapshot for the authenticated user (per the
 // "backend is always the source of truth" decision — /hub calls this on
 // every load rather than reading from localStorage).
+//
+// Query count is constant (6) no matter how many agents the player owns:
+// latest snapshot, agents, then ONE bulk query each for weapons, discs,
+// substats and skills, joined in memory.
 async function getProfile(req, res, next) {
   try {
     const snapshot = await zzzProfileModel.getLatestSnapshot(req.userId);
@@ -98,7 +104,29 @@ async function getProfile(req, res, next) {
     }
 
     const agentSnapshots = await zzzProfileModel.getAgentSnapshots(snapshot.id);
-    const agents = await Promise.all(agentSnapshots.map(buildAgentPayload));
+    const agentIds = agentSnapshots.map((a) => a.id);
+
+    const [weaponRows, discRows, skillRows] = await Promise.all([
+      zzzProfileModel.getWeaponSnapshotsForAgents(agentIds),
+      zzzProfileModel.getDiscSnapshotsForAgents(agentIds),
+      zzzProfileModel.getSkillSnapshotsForAgents(agentIds),
+    ]);
+    const substatRows = await zzzProfileModel.getDiscSubstatsForDiscs(discRows.map((d) => d.id));
+
+    const weaponByAgent = new Map(weaponRows.map((w) => [w.agent_snapshot_id, w]));
+    const discsByAgent = groupBy(discRows, (d) => d.agent_snapshot_id);
+    const skillsByAgent = groupBy(skillRows, (s) => s.agent_snapshot_id);
+    const substatsByDisc = groupBy(substatRows, (s) => s.disc_snapshot_id);
+
+    const agents = agentSnapshots.map((a) =>
+      buildAgentPayload(
+        a,
+        weaponByAgent.get(a.id) || null,
+        discsByAgent.get(a.id) || [],
+        skillsByAgent.get(a.id) || [],
+        substatsByDisc
+      )
+    );
 
     return res.status(200).json({
       uid: snapshot.uid,
@@ -222,6 +250,13 @@ async function getHistory(req, res, next) {
   }
 }
 
+const DEFAULT_REFRESH_COOLDOWN_SECONDS = 120;
+
+function refreshCooldownSeconds() {
+  const parsed = Number.parseInt(process.env.REFRESH_COOLDOWN_SECONDS, 10);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : DEFAULT_REFRESH_COOLDOWN_SECONDS;
+}
+
 // POST /api/profile/refresh
 // Manually re-fetches the player's profile from enka.network and stores a
 // new snapshot. No automatic polling happens anywhere in this backend —
@@ -233,6 +268,24 @@ async function refreshProfile(req, res, next) {
 
     if (!uid) {
       return res.status(400).json({ message: 'No UID saved for this account yet.' });
+    }
+
+    // Cooldown: protects enka.network's rate limit and stops the snapshot
+    // tables from growing without bound. Set REFRESH_COOLDOWN_SECONDS=0 to disable.
+    const cooldown = refreshCooldownSeconds();
+    if (cooldown > 0) {
+      const latest = await zzzProfileModel.getLatestSnapshot(req.userId);
+      if (latest && latest.uid === uid) {
+        const elapsed = (Date.now() - new Date(latest.fetched_at).getTime()) / 1000;
+        const remaining = Math.ceil(cooldown - elapsed);
+        if (remaining > 0) {
+          res.set('Retry-After', String(remaining));
+          return res.status(429).json({
+            message: `Your profile was refreshed recently. Try again in ${remaining} second${remaining === 1 ? '' : 's'}.`,
+            retryAfterSeconds: remaining,
+          });
+        }
+      }
     }
 
     const raw = await enkaService.fetchRawProfile(uid);

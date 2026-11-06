@@ -27,10 +27,29 @@ app.use((req, res) => {
 
 // Centralized error handler — keeps error response shape consistent as
 // { message } so the frontend's err.error?.message always works.
+//
+// Errors we raise on purpose carry an explicit `status` and a message that is
+// safe to show. Anything else (database errors, bugs) is logged server-side
+// and answered with a generic message so internals never leak to the client.
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error.',
+  // Postgres unique violation (e.g. two sign-ups racing on one email).
+  if (err && err.code === '23505') {
+    const constraint = String(err.constraint || '');
+    const message = constraint.includes('zzz_uid')
+      ? 'This UID is already linked to another account.'
+      : constraint.includes('email')
+        ? 'An account with this email already exists.'
+        : 'That value is already in use.';
+    return res.status(409).json({ message });
+  }
+
+  const intentional = Number.isInteger(err && err.status);
+  if (!intentional || err.status >= 500) {
+    console.error(err);
+  }
+
+  res.status(intentional ? err.status : 500).json({
+    message: intentional ? err.message : 'Internal server error.',
   });
 });
 

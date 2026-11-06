@@ -41,7 +41,12 @@
 const pool = require('../db/pool');
 const zzzMetadataModel = require('../models/zzzMetadata.model');
 const zzzProfileModel = require('../models/zzzProfile.model');
-const { refreshMetadataIfStale } = require('./enkaMetadata.service');
+const { refreshMetadataIfStale, refreshMetadataIfOlderThan } = require('./enkaMetadata.service');
+
+// If a player owns an agent the stored metadata doesn't know yet (e.g. a new
+// release), re-sync the metadata — but at most once per hour so an agent that
+// Enka genuinely lacks can't trigger a full re-download on every request.
+const UNKNOWN_AGENT_REFRESH_COOLDOWN_MS = 60 * 60 * 1000;
 
 const STAT_MODIFIER_SCALE = 10000;
 
@@ -227,7 +232,7 @@ const SKILL_INDEX_NAMES = {
 
 // ─── Orchestration ────────────────────────────────────────────────────────────
 
-async function insertDisc(agentSnapshotId, item) {
+async function insertDisc(agentSnapshotId, item, db) {
   const { Equipment, Slot } = item;
   const mainStatEntry = (Equipment.MainStatList || [])[0] || null;
 
@@ -239,7 +244,7 @@ async function insertDisc(agentSnapshotId, item) {
     level: Equipment.Level,
     mainStatId: mainStat.propertyId,
     mainStatValue: mainStat.value,
-  });
+  }, db);
 
   for (const sub of Equipment.RandomPropertyList || []) {
     const value = await scaledValue(sub.PropertyId, sub.PropertyValue);
@@ -247,7 +252,7 @@ async function insertDisc(agentSnapshotId, item) {
       propertyId: sub.PropertyId,
       value,
       rolls: sub.PropertyLevel ?? 1, // "Amount of rolls, only matters if substat" per docs
-    });
+    }, db);
   }
 }
 
@@ -256,7 +261,7 @@ async function getAgentAttribute(agentId) {
   return rows[0]?.attribute ?? null;
 }
 
-async function insertAgent(profileSnapshotId, avatar) {
+async function insertAgent(profileSnapshotId, avatar, db) {
   const curve = (await zzzMetadataModel.getAgentCurve(avatar.Id)) || {
     baseProps: {},
     growthProps: {},
@@ -277,7 +282,8 @@ async function insertAgent(profileSnapshotId, avatar) {
       mindscapeCinema: avatar.TalentLevel,
       coreSkillEnhancement: avatar.CoreSkillEnhancement,
     },
-    stats
+    stats,
+    db
   );
 
   if (avatar.Weapon) {
@@ -293,24 +299,54 @@ async function insertAgent(profileSnapshotId, avatar) {
       mainStatValue: main?.value ?? 0,
       subStatId: sub?.propertyId ?? null,
       subStatValue: sub?.value ?? 0,
-    });
+    }, db);
   }
 
   for (const item of avatar.EquippedList || []) {
-    await insertDisc(agentSnapshotId, item);
+    await insertDisc(agentSnapshotId, item, db);
   }
 
   // SkillLevelList is a dict, e.g. { "0": 6, "1": 8, "3": 10, "5": 4, "6": 3 }
   for (const [indexStr, level] of Object.entries(avatar.SkillLevelList || {})) {
     const skillType = SKILL_INDEX_NAMES[Number(indexStr)] ?? `skill_${indexStr}`;
     const skillLevel = typeof level === 'object' ? level.Level ?? level.level : level;
-    await zzzProfileModel.insertSkillSnapshot(agentSnapshotId, skillType, skillLevel);
+    await zzzProfileModel.insertSkillSnapshot(agentSnapshotId, skillType, skillLevel, db);
   }
+}
+
+/** Drops avatars whose agent id is missing from zzz_agents (would violate the FK). */
+async function resolveKnownAvatars(avatars) {
+  const ids = [...new Set(avatars.map((a) => a.Id))];
+  if (ids.length === 0) return avatars;
+
+  const findKnown = async () => {
+    const { rows } = await pool.query('SELECT id FROM zzz_agents WHERE id = ANY($1::int[])', [ids]);
+    return new Set(rows.map((r) => r.id));
+  };
+
+  let known = await findKnown();
+  if (known.size < ids.length) {
+    // Probably a newly released agent: re-sync metadata (rate-limited), then re-check.
+    if (await refreshMetadataIfOlderThan(UNKNOWN_AGENT_REFRESH_COOLDOWN_MS)) {
+      known = await findKnown();
+    }
+  }
+
+  return avatars.filter((a) => {
+    if (known.has(a.Id)) return true;
+    console.warn(`Skipping agent ${a.Id}: not present in stored metadata.`);
+    return false;
+  });
 }
 
 /**
  * Resolves and persists a full new snapshot for the given user from a raw
  * Enka API response. Returns the new profile_snapshot id.
+ *
+ * Everything is written inside ONE transaction: either the whole snapshot
+ * (profile + every agent, weapon, disc, substat and skill) is saved, or
+ * nothing is — a failure midway can no longer leave a half-built "latest"
+ * snapshot behind.
  */
 async function storeProfileSnapshot(userId, raw) {
   await refreshMetadataIfStale();
@@ -324,19 +360,36 @@ async function storeProfileSnapshot(userId, raw) {
     throw err;
   }
 
-  const profileSnapshotId = await zzzProfileModel.insertProfileSnapshot(
-    userId,
-    raw.uid,
-    ProfileDetail.Nickname ?? null,
-    ProfileDetail.Level
-  );
+  const avatars = await resolveKnownAvatars((ShowcaseDetail && ShowcaseDetail.AvatarList) || []);
 
-  const avatars = (ShowcaseDetail && ShowcaseDetail.AvatarList) || [];
-  for (const avatar of avatars) {
-    await insertAgent(profileSnapshotId, avatar);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const profileSnapshotId = await zzzProfileModel.insertProfileSnapshot(
+      userId,
+      raw.uid,
+      ProfileDetail.Nickname ?? null,
+      ProfileDetail.Level,
+      client
+    );
+
+    for (const avatar of avatars) {
+      await insertAgent(profileSnapshotId, avatar, client);
+    }
+
+    await client.query('COMMIT');
+    return profileSnapshotId;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      console.error('Rollback failed:', rollbackErr);
+    }
+    throw err;
+  } finally {
+    client.release();
   }
-
-  return profileSnapshotId;
 }
 
 module.exports = { storeProfileSnapshot };
