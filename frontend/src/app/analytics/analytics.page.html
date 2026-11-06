@@ -30,6 +30,7 @@
 
       <!-- Tabs -->
       <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'growth'" (click)="setTab('growth')">Growth</button>
         <button class="tab-btn" [class.active]="activeTab === 'discs'" (click)="setTab('discs')">Discs</button>
         <button class="tab-btn" [class.active]="activeTab === 'skills'" (click)="setTab('skills')">Skills</button>
         <button class="tab-btn" [class.active]="activeTab === 'roster'" (click)="setTab('roster')">Roster</button>
@@ -45,6 +46,104 @@
           [class.active]="selectedId === agent.snapshotId"
           (click)="selectAgent(agent.snapshotId)"
         >{{ agent.name }}</button>
+      </div>
+
+      <!-- Growth over time -->
+      <div class="tab-panel" *ngIf="activeTab === 'growth'">
+
+        <div class="chip-row">
+          <button class="chip" [class.active]="growthTarget === 'account'" (click)="selectGrowthTarget('account')">Account</button>
+          <button
+            class="chip"
+            *ngFor="let agent of growthAgents"
+            [class.active]="growthTarget === '' + agent.agentId"
+            (click)="selectGrowthTarget('' + agent.agentId)"
+          >{{ agent.name }}</button>
+        </div>
+
+        <div class="chip-row" *ngIf="growthTarget !== 'account'">
+          <button
+            class="chip"
+            *ngFor="let opt of growthMetricOptions"
+            [class.active]="growthMetric === opt.key"
+            (click)="selectGrowthMetric(opt.key)"
+          >{{ opt.label }}</button>
+        </div>
+
+        <div class="state-block compact" *ngIf="historyLoading">
+          <ion-spinner name="crescent"></ion-spinner>
+          <p>Loading history…</p>
+        </div>
+
+        <div class="state-block compact error" *ngIf="!historyLoading && historyError">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <p>{{ historyError }}</p>
+        </div>
+
+        <ng-container *ngIf="!historyLoading && !historyError">
+          <div class="section-label">{{ growthTitle }}</div>
+
+          <div class="growth-card" *ngIf="hasGrowthData && growthChart as chart; else notEnough">
+            <div class="growth-top">
+              <div class="growth-readout" *ngIf="selectedGrowthPoint as sp">
+                <span class="readout-value">{{ sp.valueLabel }}</span>
+                <span class="readout-date">{{ sp.dateLabel }}</span>
+              </div>
+              <div class="growth-summary" [ngClass]="'trend-' + growthTrend">{{ growthSummary }}</div>
+            </div>
+
+            <svg class="growth-svg" [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" role="img" aria-label="Growth over time">
+              <g *ngFor="let tick of chart.yTicks">
+                <line class="g-grid" x1="56" x2="580" [attr.y1]="tick.y" [attr.y2]="tick.y"></line>
+                <text class="g-ytext" x="48" [attr.y]="tick.y" text-anchor="end" dominant-baseline="central">{{ tick.label }}</text>
+              </g>
+
+              <path class="g-area" [attr.d]="chart.areaPath"></path>
+              <path class="g-line" [attr.d]="chart.linePath"></path>
+
+              <line
+                *ngIf="selectedGrowthPoint as sel"
+                class="g-guide"
+                [attr.x1]="sel.x" [attr.x2]="sel.x" y1="16" y2="224"
+              ></line>
+
+              <g
+                *ngFor="let p of chart.points; let i = index"
+                class="g-point"
+                [class.selected]="i === growthSelected"
+                (click)="selectGrowthPoint(i)"
+              >
+                <circle class="g-hit" [attr.cx]="p.x" [attr.cy]="p.y" r="14"></circle>
+                <circle class="g-dot" [attr.cx]="p.x" [attr.cy]="p.y" [attr.r]="i === growthSelected ? 5 : 3.5"></circle>
+              </g>
+
+              <text
+                *ngFor="let l of chart.xLabels"
+                class="g-xtext"
+                [attr.x]="l.x" y="248" [attr.text-anchor]="l.anchor"
+              >{{ l.label }}</text>
+            </svg>
+          </div>
+
+          <ng-template #notEnough>
+            <div class="state-block compact">
+              <ion-icon name="stats-chart-outline"></ion-icon>
+              <p *ngIf="growthPointCount === 1">
+                Only one snapshot so far. Refresh your profile after your next session and the growth line will appear.
+              </p>
+              <p *ngIf="growthPointCount !== 1">No history for this selection yet.</p>
+            </div>
+          </ng-template>
+
+          <div class="bar-list" *ngIf="hasGrowthData">
+            <div class="section-label">Snapshots</div>
+            <div class="change-row" *ngFor="let row of growthRows">
+              <span class="change-date">{{ row.dateLabel }}</span>
+              <span class="change-value">{{ row.valueLabel }}</span>
+              <span class="change-delta" [ngClass]="'trend-' + row.trend">{{ row.deltaLabel }}</span>
+            </div>
+          </div>
+        </ng-container>
       </div>
 
       <!-- Discs -->

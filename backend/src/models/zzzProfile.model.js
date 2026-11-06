@@ -161,6 +161,45 @@ async function getSkillSnapshots(agentSnapshotId) {
   return rows;
 }
 
+// ─── History (used by GET /api/profile/history) ──────────────────────────────
+
+// The most recent `limit` snapshots for a user, returned oldest → newest so the
+// client can plot them left to right without re-sorting.
+async function getSnapshotHistory(userId, limit) {
+  const { rows } = await pool.query(
+    `SELECT id, fetched_at, interknot_level
+     FROM (
+       SELECT id, fetched_at, interknot_level
+       FROM profile_snapshots
+       WHERE user_id = $1
+       ORDER BY fetched_at DESC
+       LIMIT $2
+     ) recent
+     ORDER BY fetched_at ASC`,
+    [userId, limit]
+  );
+  return rows;
+}
+
+// Every agent row (core fields + stats only, no gear) for a set of snapshots,
+// in ONE query — avoids the per-agent query pattern used by GET /api/profile.
+async function getAgentSnapshotsForProfiles(profileSnapshotIds) {
+  if (!profileSnapshotIds.length) return [];
+  const { rows } = await pool.query(
+    `SELECT ags.id, ags.profile_snapshot_id, ags.agent_id,
+            ags.level, ags.promotion_level, ags.mindscape_cinema, ags.core_skill_enhancement,
+            ags.hp, ags.atk, ags.def, ags.impact, ags.crit_rate, ags.crit_dmg,
+            ags.attribute_dmg_bonus, ags.anomaly_mastery, ags.anomaly_proficiency,
+            ags.pen_ratio, ags.pen_flat, ags.energy_regen,
+            za.name, za.attribute, za.specialty, za.rarity, za.icon_url
+     FROM agent_snapshots ags
+     JOIN zzz_agents za ON za.id = ags.agent_id
+     WHERE ags.profile_snapshot_id = ANY($1::uuid[])`,
+    [profileSnapshotIds]
+  );
+  return rows;
+}
+
 module.exports = {
   insertProfileSnapshot,
   insertAgentSnapshot,
@@ -174,4 +213,6 @@ module.exports = {
   getDiscSnapshots,
   getDiscSubstats,
   getSkillSnapshots,
+  getSnapshotHistory,
+  getAgentSnapshotsForProfiles,
 };
