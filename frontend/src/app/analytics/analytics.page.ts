@@ -64,6 +64,17 @@ const G_RIGHT = 20;
 const G_TOP = 16;
 const G_BOTTOM = 36;
 
+interface VersusRow {
+  label: string;
+  aDisplay: string;
+  bDisplay: string;
+  aPct: number; // bar widths relative to the larger of the two values
+  bPct: number;
+  winner: 'a' | 'b' | 'tie';
+}
+
+type CompareMode = 'ranking' | 'versus';
+
 interface StatOption {
   key: keyof AgentStats;
   label: string;
@@ -119,6 +130,11 @@ export class AnalyticsPage implements ViewWillEnter {
   // Shared by the Discs and Skills tabs. 'all' = whole roster.
   selectedId = 'all';
   compareKey: keyof AgentStats = 'atk';
+  compareMode: CompareMode = 'ranking';
+  versusA = ''; // snapshotId of the left agent
+  versusB = ''; // snapshotId of the right agent
+  versusRows: VersusRow[] = [];
+  versusScore = { a: 0, b: 0, tie: 0 };
   readonly statOptions = STAT_OPTIONS;
 
   // Everything below is precomputed (not getters) so it isn't rebuilt on every
@@ -261,6 +277,32 @@ export class AnalyticsPage implements ViewWillEnter {
     return this.growthChart?.points.length ?? 0;
   }
 
+  setCompareMode(mode: CompareMode): void {
+    this.compareMode = mode;
+    this.changeDetector.detectChanges();
+  }
+
+  selectVersus(side: 'a' | 'b', snapshotId: string): void {
+    if (side === 'a') this.versusA = snapshotId;
+    else this.versusB = snapshotId;
+    this.buildVersusRows();
+    this.changeDetector.detectChanges();
+  }
+
+  swapVersus(): void {
+    [this.versusA, this.versusB] = [this.versusB, this.versusA];
+    this.buildVersusRows();
+    this.changeDetector.detectChanges();
+  }
+
+  get versusAgentA(): AgentSummary | null {
+    return this.agents.find((a) => a.snapshotId === this.versusA) ?? null;
+  }
+
+  get versusAgentB(): AgentSummary | null {
+    return this.agents.find((a) => a.snapshotId === this.versusB) ?? null;
+  }
+
   selectStat(key: keyof AgentStats): void {
     this.compareKey = key;
     this.buildCompareRows();
@@ -279,6 +321,8 @@ export class AnalyticsPage implements ViewWillEnter {
     this.buildDonuts();
     this.buildLevelRows();
     this.buildCompareRows();
+    this.ensureVersusSelection();
+    this.buildVersusRows();
   }
 
   private get selectedAgents(): AgentSummary[] {
@@ -533,6 +577,55 @@ export class AnalyticsPage implements ViewWillEnter {
       })
       .reverse()
       .slice(0, 10);
+  }
+
+  // ─── Head to head ───────────────────────────────────────────────────────────
+
+  /** Picks sensible defaults (top two agents) and repairs stale selections. */
+  private ensureVersusSelection(): void {
+    const ids = this.agents.map((a) => a.snapshotId);
+    if (ids.length === 0) {
+      this.versusA = '';
+      this.versusB = '';
+      return;
+    }
+    if (!ids.includes(this.versusA)) this.versusA = ids[0];
+    if (!ids.includes(this.versusB) || (this.versusB === this.versusA && ids.length > 1)) {
+      this.versusB = ids.find((id) => id !== this.versusA) ?? ids[0];
+    }
+  }
+
+  private buildVersusRows(): void {
+    const a = this.versusAgentA;
+    const b = this.versusAgentB;
+    this.versusRows = [];
+    this.versusScore = { a: 0, b: 0, tie: 0 };
+    if (!a || !b) return;
+
+    const metrics: { label: string; percent: boolean; pick: (x: AgentSummary) => number }[] = [
+      { label: 'Level', percent: false, pick: (x) => x.level },
+      ...STAT_OPTIONS.map((o) => ({ label: o.label, percent: o.percent, pick: (x: AgentSummary) => x.stats[o.key] })),
+    ];
+
+    this.versusRows = metrics.map((m) => {
+      const av = m.pick(a);
+      const bv = m.pick(b);
+      const max = Math.max(av, bv);
+      // Compare the displayed precision so "52.0% vs 52.0%" is a tie, not a win.
+      const round = (v: number) => (m.percent ? Math.round(v * 1000) : Math.round(v));
+      const winner: VersusRow['winner'] = round(av) === round(bv) ? 'tie' : av > bv ? 'a' : 'b';
+      this.versusScore[winner]++;
+
+      const fmt = (v: number) => (m.percent ? `${(v * 100).toFixed(1)}%` : Math.round(v).toLocaleString());
+      return {
+        label: m.label,
+        aDisplay: fmt(av),
+        bDisplay: fmt(bv),
+        aPct: max > 0 ? (av / max) * 100 : 0,
+        bPct: max > 0 ? (bv / max) * 100 : 0,
+        winner,
+      };
+    });
   }
 
   private buildCompareRows(): void {

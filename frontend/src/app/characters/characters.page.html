@@ -1,10 +1,10 @@
 <ion-content class="characters-content" [fullscreen]="true">
+  <!-- Pull down to fetch fresh data from the game -->
+  <ion-refresher slot="fixed" (ionRefresh)="onPullRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <div class="characters-container">
-    
-    <button class="back-btn" type="button" (click)="goBack()">
-      <ion-icon name="chevron-back-outline"></ion-icon>
-      <span>Hub</span>
-    </button>
 
     <div class="characters-header">
       <div class="header-text">
@@ -16,10 +16,71 @@
       </button>
     </div>
 
-    <!-- Loading -->
-    <div class="state-block" *ngIf="loading">
-      <ion-spinner name="crescent"></ion-spinner>
-      <p>Loading your roster…</p>
+    <!-- Search + filter toggle -->
+    <div class="toolbar" *ngIf="agents.length > 0">
+      <div class="search-box">
+        <ion-icon name="search-outline"></ion-icon>
+        <input
+          type="search"
+          placeholder="Search agents"
+          autocomplete="off"
+          [value]="searchTerm"
+          (input)="onSearch($any($event.target).value)"
+        />
+        <button class="clear-btn" type="button" *ngIf="searchTerm" (click)="onSearch('')" aria-label="Clear search">
+          <ion-icon name="close-circle"></ion-icon>
+        </button>
+      </div>
+      <button
+        class="filter-toggle"
+        type="button"
+        [class.active]="showFilters || activeFilterCount > 0"
+        (click)="toggleFilters()"
+        aria-label="Filters and sorting"
+      >
+        <ion-icon name="options-outline"></ion-icon>
+        <span class="filter-badge" *ngIf="activeFilterCount > 0">{{ activeFilterCount }}</span>
+      </button>
+    </div>
+
+    <!-- Filters + sort -->
+    <div class="filter-panel" *ngIf="showFilters && agents.length > 0">
+      <div class="filter-group" *ngFor="let group of filterGroups">
+        <span class="filter-label">{{ group.label }}</span>
+        <div class="filter-chips">
+          <button
+            type="button"
+            class="chip"
+            *ngFor="let option of group.options"
+            [class.active]="isSelected(group.key, option)"
+            (click)="toggleFilter(group.key, option)"
+          >{{ option }}</button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Sort by</span>
+        <select class="sort-select" (change)="onSort($any($event.target).value)">
+          <option *ngFor="let opt of sortOptions" [value]="opt.key" [selected]="opt.key === sortKey">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <button type="button" class="clear-filters" *ngIf="hasActiveView" (click)="clearFilters()">Clear search and filters</button>
+    </div>
+
+    <p class="result-count" *ngIf="agents.length > 0 && !errorMessage">
+      <ng-container *ngIf="hasActiveView; else allCount">Showing {{ visibleAgents.length }} of {{ agents.length }}</ng-container>
+      <ng-template #allCount>{{ agents.length }} agents</ng-template>
+      <span *ngIf="favoriteCount > 0"> · {{ favoriteCount }} pinned</span>
+    </p>
+
+    <!-- Loading skeleton (first load only; later visits keep the list on screen) -->
+    <div class="agent-grid" *ngIf="loading && agents.length === 0 && !errorMessage" aria-busy="true">
+      <div class="skeleton-card" *ngFor="let n of skeletonItems">
+        <div class="sk sk-icon"></div>
+        <div class="sk sk-line"></div>
+        <div class="sk sk-line short"></div>
+      </div>
     </div>
 
     <!-- Error -->
@@ -29,31 +90,45 @@
       <button class="retry-btn" type="button" (click)="refresh()">Try again</button>
     </div>
 
-    <!-- Empty -->
+    <!-- Empty profile -->
     <div class="state-block" *ngIf="!loading && !errorMessage && agents.length === 0">
       <ion-icon name="people-outline"></ion-icon>
       <p>No agents found on this profile yet.</p>
     </div>
 
+    <!-- No search/filter matches -->
+    <div class="state-block" *ngIf="!errorMessage && agents.length > 0 && visibleAgents.length === 0">
+      <ion-icon name="search-outline"></ion-icon>
+      <p>No agents match your search.</p>
+      <button class="retry-btn" type="button" (click)="clearFilters()">Clear search and filters</button>
+    </div>
+
     <!-- Roster grid -->
-    <div class="agent-grid" *ngIf="!loading && !errorMessage && agents.length > 0">
-      <button
-        class="agent-card"
-        type="button"
-        *ngFor="let agent of agents"
-        (click)="openAgent(agent)"
-      >
-        <div class="agent-icon">
-          <img *ngIf="agent.iconUrl" [src]="agent.iconUrl" [alt]="agent.name" />
-          <ion-icon *ngIf="!agent.iconUrl" name="person-outline"></ion-icon>
-        </div>
-        <span class="agent-name">{{ agent.name }}</span>
-        <span class="agent-meta">
-          <span class="agent-level">Lv. {{ agent.level }}</span>
-          <span class="agent-rarity" *ngIf="agent.rarity">{{ agent.rarity }}</span>
-        </span>
-        <span class="agent-attribute" *ngIf="agent.attribute">{{ agent.attribute }} · {{ agent.specialty }}</span>
-      </button>
+    <div class="agent-grid" *ngIf="!errorMessage && visibleAgents.length > 0">
+      <div class="agent-cell" *ngFor="let agent of visibleAgents">
+        <button class="agent-card" type="button" (click)="openAgent(agent)">
+          <div class="agent-icon">
+            <img *ngIf="agent.iconUrl" [src]="agent.iconUrl" [alt]="agent.name" />
+            <ion-icon *ngIf="!agent.iconUrl" name="person-outline"></ion-icon>
+          </div>
+          <span class="agent-name">{{ agent.name }}</span>
+          <span class="agent-meta">
+            <span class="agent-level">Lv. {{ agent.level }}</span>
+            <span class="agent-rarity" *ngIf="agent.rarity">{{ agent.rarity }}</span>
+          </span>
+          <span class="agent-attribute" *ngIf="agent.attribute">{{ agent.attribute }} · {{ agent.specialty }}</span>
+        </button>
+        <button
+          class="fav-btn"
+          type="button"
+          [class.active]="isFavorite(agent)"
+          (click)="toggleFavorite(agent, $event)"
+          [attr.aria-label]="(isFavorite(agent) ? 'Unpin ' : 'Pin ') + agent.name"
+          [attr.aria-pressed]="isFavorite(agent)"
+        >
+          <ion-icon [name]="isFavorite(agent) ? 'star' : 'star-outline'"></ion-icon>
+        </button>
+      </div>
     </div>
 
   </div>

@@ -11,8 +11,46 @@
   --font: 'Inter', system-ui, sans-serif;
 }
 
+// ─── Scrollbars (match the app: slim, rounded, accent on hover) ──────────────
+// Firefox uses scrollbar-width/color; Chromium/Safari use the -webkit- pseudo-elements.
+@mixin app-scrollbar($size: 6px) {
+  scrollbar-width: thin;
+  scrollbar-color: #2e3450 transparent;
+
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #2e3450;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.15s ease;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #5b7fff;
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
 .analytics-content {
   --background: var(--bg-page);
+}
+
+// The vertical page scroll lives inside ion-content's shadow DOM, hence ::part(scroll)
+.analytics-content::part(scroll) {
+  @include app-scrollbar(6px);
 }
 
 .analytics-container {
@@ -95,7 +133,7 @@
   overflow-x: auto;
   padding-bottom: 8px;
   margin-bottom: 14px;
-  scrollbar-width: thin;
+  @include app-scrollbar(5px);
 }
 
 .chip {
@@ -431,23 +469,116 @@
 .change-value { color: var(--text-primary); font-weight: 600; }
 .change-delta { min-width: 96px; text-align: right; font-weight: 600; }
 
-@mixin app-scrollbar($size: 6px) {
-  scrollbar-width: thin;                 // Firefox
-  scrollbar-color: #2e3450 transparent;
+// ─── Head to head ───────────────────────────────────────────────────────────
+.mini-icon.big {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
 
-  &::-webkit-scrollbar { width: $size; height: $size; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: #2e3450;                 // same as your card borders
-    border-radius: 999px;
-    border: 1px solid transparent;
-    background-clip: padding-box;
-    transition: background 0.15s ease;
-  }
-  &::-webkit-scrollbar-thumb:hover { background: #5b7fff; }  // accent on hover
-  &::-webkit-scrollbar-corner { background: transparent; }
+  ion-icon { font-size: 24px; }
 }
 
-// Vertical page scroll lives in ion-content's shadow DOM, hence ::part(scroll)
-.analytics-content::part(scroll) { @include app-scrollbar(6px); }
-.chip-row { @include app-scrollbar(5px); }
+.versus-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.versus-side {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-select {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
+  outline: none;
+
+  &:focus { border-color: var(--accent); }
+}
+
+.swap-btn {
+  flex-shrink: 0;
+  margin-top: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover { border-color: var(--accent); }
+  &:active { transform: scale(0.92); }
+}
+
+.versus-score { text-align: center; margin: 0 0 12px; }
+
+.versus-list { gap: 14px; }
+
+.versus-row {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.v-val {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+
+  &.right { text-align: right; }
+  &.win { color: var(--accent); }
+}
+
+.v-center { min-width: 0; }
+
+.v-label {
+  display: block;
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.v-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.v-track {
+  height: 8px;
+  background: var(--bg-input);
+  display: flex;
+
+  &.left { justify-content: flex-end; border-radius: 999px 0 0 999px; overflow: hidden; }
+  &.right { justify-content: flex-start; border-radius: 0 999px 999px 0; overflow: hidden; }
+}
+
+.v-fill {
+  height: 100%;
+  background: #3d4570;
+  transition: width 0.3s ease;
+
+  &.win { background: linear-gradient(90deg, var(--accent), #8b5cf6); }
+}

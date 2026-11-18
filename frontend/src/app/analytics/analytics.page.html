@@ -229,31 +229,94 @@
 
       <!-- Compare -->
       <div class="tab-panel" *ngIf="activeTab === 'compare'">
+
         <div class="chip-row">
-          <button
-            class="chip"
-            *ngFor="let opt of statOptions"
-            [class.active]="compareKey === opt.key"
-            (click)="selectStat(opt.key)"
-          >{{ opt.label }}</button>
+          <button class="chip" [class.active]="compareMode === 'ranking'" (click)="setCompareMode('ranking')">Ranking</button>
+          <button class="chip" [class.active]="compareMode === 'versus'" (click)="setCompareMode('versus')">Head to head</button>
         </div>
 
-        <div class="bar-list">
-          <div class="bar-row" *ngFor="let row of compareRows; let i = index">
-            <div class="bar-head">
-              <span class="bar-label compare-label">
-                <span class="rank">{{ i + 1 }}</span>
-                <span class="mini-icon">
-                  <img *ngIf="row.iconUrl" [src]="row.iconUrl" [alt]="row.label" />
-                  <ion-icon *ngIf="!row.iconUrl" name="person-outline"></ion-icon>
-                </span>
-                {{ row.label }}
-              </span>
-              <span class="bar-value">{{ row.display }}<span class="bar-sub" *ngIf="row.sub"> · {{ row.sub }}</span></span>
-            </div>
-            <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+        <!-- Ranking -->
+        <ng-container *ngIf="compareMode === 'ranking'">
+          <div class="chip-row">
+            <button
+              class="chip"
+              *ngFor="let opt of statOptions"
+              [class.active]="compareKey === opt.key"
+              (click)="selectStat(opt.key)"
+            >{{ opt.label }}</button>
           </div>
-        </div>
+
+          <div class="bar-list">
+            <div class="bar-row" *ngFor="let row of compareRows; let i = index">
+              <div class="bar-head">
+                <span class="bar-label compare-label">
+                  <span class="rank">{{ i + 1 }}</span>
+                  <span class="mini-icon">
+                    <img *ngIf="row.iconUrl" [src]="row.iconUrl" [alt]="row.label" />
+                    <ion-icon *ngIf="!row.iconUrl" name="person-outline"></ion-icon>
+                  </span>
+                  {{ row.label }}
+                </span>
+                <span class="bar-value">{{ row.display }}<span class="bar-sub" *ngIf="row.sub"> · {{ row.sub }}</span></span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" [style.width.%]="row.pct"></div></div>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Head to head -->
+        <ng-container *ngIf="compareMode === 'versus'">
+          <div class="state-block compact" *ngIf="agents.length < 2">
+            <ion-icon name="people-outline"></ion-icon>
+            <p>You need at least two agents to compare them.</p>
+          </div>
+
+          <ng-container *ngIf="agents.length >= 2">
+            <div class="versus-head">
+              <div class="versus-side">
+                <span class="mini-icon big">
+                  <img *ngIf="versusAgentA?.iconUrl" [src]="versusAgentA?.iconUrl" [alt]="versusAgentA?.name" />
+                  <ion-icon *ngIf="!versusAgentA?.iconUrl" name="person-outline"></ion-icon>
+                </span>
+                <select class="agent-select" (change)="selectVersus('a', $any($event.target).value)" aria-label="First agent">
+                  <option *ngFor="let ag of agents" [value]="ag.snapshotId" [selected]="ag.snapshotId === versusA">{{ ag.name }}</option>
+                </select>
+              </div>
+
+              <button class="swap-btn" type="button" (click)="swapVersus()" aria-label="Swap agents">VS</button>
+
+              <div class="versus-side">
+                <span class="mini-icon big">
+                  <img *ngIf="versusAgentB?.iconUrl" [src]="versusAgentB?.iconUrl" [alt]="versusAgentB?.name" />
+                  <ion-icon *ngIf="!versusAgentB?.iconUrl" name="person-outline"></ion-icon>
+                </span>
+                <select class="agent-select" (change)="selectVersus('b', $any($event.target).value)" aria-label="Second agent">
+                  <option *ngFor="let ag of agents" [value]="ag.snapshotId" [selected]="ag.snapshotId === versusB">{{ ag.name }}</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="summary-note versus-score">
+              {{ versusAgentA?.name }} leads in {{ versusScore.a }} ·
+              {{ versusAgentB?.name }} leads in {{ versusScore.b }} ·
+              {{ versusScore.tie }} tied
+            </p>
+
+            <div class="bar-list versus-list">
+              <div class="versus-row" *ngFor="let row of versusRows">
+                <span class="v-val" [class.win]="row.winner === 'a'">{{ row.aDisplay }}</span>
+                <div class="v-center">
+                  <span class="v-label">{{ row.label }}</span>
+                  <div class="v-bars">
+                    <div class="v-track left"><div class="v-fill" [class.win]="row.winner === 'a'" [style.width.%]="row.aPct"></div></div>
+                    <div class="v-track right"><div class="v-fill" [class.win]="row.winner === 'b'" [style.width.%]="row.bPct"></div></div>
+                  </div>
+                </div>
+                <span class="v-val right" [class.win]="row.winner === 'b'">{{ row.bDisplay }}</span>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
       </div>
 
     </ng-container>
